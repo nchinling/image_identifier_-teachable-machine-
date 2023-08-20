@@ -20,9 +20,8 @@
             <div class="col-sm">
                 <main
                     style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 70vh;">
-                    <button type="button" class="btn btn-primary" id="start-button" onclick="init()">Start Video
-                        Camera</button>
 
+                    <div id="user-score" style="color: blue;">User: 0</div>
                     <div id="webcam-container"></div>
                     <div id="label-container"></div>
                     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
@@ -88,7 +87,6 @@
                             // predict can take in an image, video, or canvas html element
                             const prediction = await model.predict(webcam.canvas);
 
-                            // Initialize variables to store the user's choice and the highest probability
                             let highestProbability = 0;
 
                             for (let i = 0; i < maxPredictions; i++) {
@@ -110,7 +108,7 @@
 
                                 if (probability > highestProbability) {
                                     highestProbability = probability;
-                                    userChoice = className; // Set userChoice to the class with the highest probability
+                                    userChoice = className;
                                 }
 
 
@@ -118,11 +116,10 @@
 
                         }
 
+                        let userScore = 0;
+                        let computerScore = 0;
+                        let gameStarted = false; // Track whether the game has started
 
-                        let gameStarted = false; // To track whether the game has started
-
-
-                        // Function to start the game
                         function startGame() {
                             if (!gameStarted) {
                                 gameStarted = true;
@@ -168,41 +165,31 @@
                                     countdown--;
                                     updateCountdown();
 
-                                    // When the countdown reaches 0, proceed to display the computer's choice
                                     if (countdown === 0) {
                                         clearInterval(countdownInterval); // Stop the countdown
                                         // Array of computer choices
                                         const computerChoices = ["Scissors", "Paper", "Stone"];
 
-                                        // const computerChoiceImageDiv = document.getElementById('computer-choice-image');
-
-                                        // Get a random computer choice
                                         const randomIndex = Math.floor(Math.random() * computerChoices.length);
                                         const computerChoice = computerChoices[randomIndex];
 
                                         const computerChoiceImage = document.createElement('img');
 
                                         // Set the image source based on the computer's choice
-                                        computerChoiceImage.src = `images/${computerChoice.toLowerCase()}.png`; // Assumes your images are named "scissors.png", "paper.png", etc.
+                                        computerChoiceImage.src = `images/${computerChoice.toLowerCase()}.png`;
 
-                                        // Set alt text for the image (optional)
-                                        computerChoiceImage.alt = `Computer's choice: ${computerChoice}`;
+                                        computerChoiceImage.style.width = '400px';
+                                        computerChoiceImage.style.height = '400px';
 
-                                        computerChoiceImage.style.width = '400px'; // Adjust the width as needed
-                                        computerChoiceImage.style.height = '400px'; // Adjust the height as needed
-
-                                        // Append the image to the computer-choice-image-div
                                         computerChoiceImageDiv.innerHTML = '';
                                         computerChoiceImageDiv.appendChild(computerChoiceImage);
 
-                                        // Display the computer's choice in the HTML
                                         computerChoiceDiv.innerHTML = "Computer: " + computerChoice;
                                         userChoiceDiv.innerHTML = "User: " + userChoice;
 
-                                        // Compare computer's choice with user's choice
-
-                                        let result = "It's a tie!"; // Default result is a tie
-                                        let resultColor = "brown"; // Default color is amber
+                                        // Compare 
+                                        let result = "It's a tie!"; // Default
+                                        let resultColor = "brown"; // Default 
 
                                         if (
                                             (userChoice === "Scissors" && computerChoice === "Paper") ||
@@ -211,6 +198,7 @@
                                         ) {
                                             result = "You Win!";
                                             resultColor = "green";
+                                            userScore++;
                                         } else if (
                                             (computerChoice === "Scissors" && userChoice === "Paper") ||
                                             (computerChoice === "Paper" && userChoice === "Stone") ||
@@ -218,13 +206,15 @@
                                         ) {
                                             result = "Computer Wins!";
                                             resultColor = "red";
+                                            computerScore++;
                                         }
 
-                                        // Display the result with the specified color
                                         document.getElementById('result').innerHTML = result;
                                         document.getElementById('result').style.color = resultColor;
 
-
+                                        // Update user score
+                                        document.getElementById('user-score').innerHTML = `User: ${userScore}`;
+                                        document.getElementById('computer-score').innerHTML = `Computer: ${computerScore}`;
 
                                         // Reset the gameStarted variable to allow another round
                                         gameStarted = false;
@@ -239,14 +229,13 @@
 
                     </script>
 
-
-
                     <div id="user-choice" style="color: blue;"></div>
                 </main>
             </div>
 
 
             <div class="col-sm">
+                <div id="computer-score" style="color: red; text-align: center;">Computer: 0</div>
                 <div id="computer-choice-image" style="text-align: center;"></div>
                 <div id="computer-choice" style="color: red; text-align: center;"></div>
             </div>
@@ -256,13 +245,14 @@
 
 
     <div id="game-result-container" style="text-align: center;">
-        <button type="button" class="btn btn-success" id="start-game-button" onclick="startGame()">Start Game</button>
-        <!-- <div id="computer-choice-image"></div> -->
-        <div id="countdown"></div>
-        <!-- <div id="user-choice" style="color: blue;"></div> -->
-        <!-- <div id="computer-choice" style="color: red;"></div> -->
         <div id="result" style="color: amber;"></div>
+        <button type="button" class="btn btn-success" id="start-game-button" onclick="startGame()">Start
+            Game</button><br>
+        <button type="button" class="btn btn-primary" id="start-button" onclick="init()">Start Video
+            Camera</button>
+        <div id="countdown"></div>
     </div>
+    <br>
 
     <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"
         integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN"

@@ -5,3 +5,15 @@
     justify-content: center;
     text-align: center;
 }
+
+#result {
+    font-size: 2em;
+}
+
+#user-score {
+    font-size: 2em;
+}
+
+#computer-score {
+    font-size: 2em;
+}
