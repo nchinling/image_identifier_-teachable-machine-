@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.0.0/dist/css/bootstrap.min.css"
+        integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    <link rel="stylesheet" type="text/css" rel="noopener" target="_blank" href="styles.css">
+    <title>Scissors Paper Stone</title>
+</head>
+
+<body>
+    <header style="text-align: center; padding: 20px;">
+        <h1>Scissors Paper Stone</h1><br>
+    </header>
+    <div class="container">
+        <div class="row">
+
+            <div class="col-sm">
+                <main
+                    style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 70vh;">
+                    <button type="button" class="btn btn-primary" id="start-button" onclick="init()">Start Video
+                        Camera</button>
+
+                    <div id="webcam-container"></div>
+                    <div id="label-container"></div>
+                    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
+                    <script
+                        src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js"></script>
+                    <script type="text/javascript">
+                        // More API functions here:
+                        // https://github.com/googlecreativelab/teachablemachine-community/tree/master/libraries/image
+
+                        // the link to your model provided by Teachable Machine export panel
+                        const URL = "https://teachablemachine.withgoogle.com/models/-cxY68qn-/";
+
+                        const computerChoices = ["Scissor", "Paper", "Stone"];
+
+
+                        let model, webcam, labelContainer, maxPredictions;
+
+                        let userChoice = "";
+
+
+                        // Load the image model and setup the webcam
+                        async function init() {
+                            const modelURL = URL + "model.json";
+                            const metadataURL = URL + "metadata.json";
+
+                            document.getElementById('start-button').style.display = 'none';
+
+                            // load the model and metadata
+                            // Refer to tmImage.loadFromFiles() in the API to support files from a file picker
+                            // or files from your local hard drive
+                            // Note: the pose library adds "tmImage" object to your window (window.tmImage)
+                            model = await tmImage.load(modelURL, metadataURL);
+                            maxPredictions = model.getTotalClasses();
+
+                            // Convenience function to setup a webcam
+                            const flip = true; // whether to flip the webcam
+                            webcam = new tmImage.Webcam(400, 400, flip); // width, height, flip
+                            await webcam.setup(); // request access to the webcam
+                            await webcam.play();
+                            window.requestAnimationFrame(loop);
+
+                            // append elements to the DOM
+                            document.getElementById("webcam-container").appendChild(webcam.canvas);
+                            labelContainer = document.getElementById("label-container");
+                            for (let i = 0; i < maxPredictions; i++) { // and class labels
+                                labelContainer.appendChild(document.createElement("div"));
+                            }
+
+                        }
+
+                        async function loop() {
+                            webcam.update(); // update the webcam frame
+                            await predict();
+                            window.requestAnimationFrame(loop);
+                        }
+
+
+
+
+
+                        // run the webcam image through the image model
+                        async function predict() {
+                            // predict can take in an image, video, or canvas html element
+                            const prediction = await model.predict(webcam.canvas);
+
+                            // Initialize variables to store the user's choice and the highest probability
+                            let highestProbability = 0;
+
+                            for (let i = 0; i < maxPredictions; i++) {
+                                const className = prediction[i].className;
+                                const probability = prediction[i].probability.toFixed(2);
+                                const classPrediction = className + ": " + probability;
+
+                                // Print out the statement based on the predicted class
+                                if (className === "Scissors") {
+                                    labelContainer.childNodes[i].innerHTML = "You picked Scissors: " + probability;
+                                } else if (className === "Paper") {
+                                    labelContainer.childNodes[i].innerHTML = "You picked Paper: " + probability;
+                                } else if (className === "Stone") {
+                                    labelContainer.childNodes[i].innerHTML = "You picked Stone: " + probability;
+                                } else {
+                                    // Handle other classes if needed
+                                    labelContainer.childNodes[i].innerHTML = "Unknown Class: " + probability;
+                                }
+
+                                if (probability > highestProbability) {
+                                    highestProbability = probability;
+                                    userChoice = className; // Set userChoice to the class with the highest probability
+                                }
+
+
+                            }
+
+                        }
+
+
+                        let gameStarted = false; // To track whether the game has started
+
+
+                        // Function to start the game
+                        function startGame() {
+                            if (!gameStarted) {
+                                gameStarted = true;
+
+                                // Clear the previous result and its color
+                                document.getElementById('result').innerHTML = '';
+                                document.getElementById('result').style.color = '';
+
+                                // Hide the "Start Game" button after clicking
+                                document.getElementById('start-game-button').style.display = 'none';
+
+
+                                // Get the computer choice div, user choice div and countdown div
+                                const computerChoiceDiv = document.getElementById('computer-choice');
+                                const userChoiceDiv = document.getElementById('user-choice');
+                                const countdownDiv = document.getElementById('countdown');
+                                const computerChoiceImageDiv = document.getElementById('computer-choice-image');
+
+                                // Clear any previous computer choice and countdown
+                                computerChoiceDiv.innerHTML = '';
+                                userChoiceDiv.innerHTML = '';
+                                countdownDiv.innerHTML = '';
+                                computerChoiceImageDiv.innerHTML = '';
+
+                                // Create a countdown timer
+                                let countdown = 4; // 4 seconds
+
+                                // Function to update the countdown display
+                                function updateCountdown() {
+                                    // Display the countdown in the HTML, but only when it's greater than 0
+                                    if (countdown > 0) {
+                                        countdownDiv.innerHTML = "Starting in " + countdown + " seconds...";
+                                    } else {
+                                        // If countdown is 0 or less, clear the countdown display
+                                        countdownDiv.innerHTML = "";
+                                    }
+                                }
+
+                                updateCountdown();
+
+                                // Update the countdown every second
+                                const countdownInterval = setInterval(() => {
+                                    countdown--;
+                                    updateCountdown();
+
+                                    // When the countdown reaches 0, proceed to display the computer's choice
+                                    if (countdown === 0) {
+                                        clearInterval(countdownInterval); // Stop the countdown
+                                        // Array of computer choices
+                                        const computerChoices = ["Scissors", "Paper", "Stone"];
+
+                                        // const computerChoiceImageDiv = document.getElementById('computer-choice-image');
+
+                                        // Get a random computer choice
+                                        const randomIndex = Math.floor(Math.random() * computerChoices.length);
+                                        const computerChoice = computerChoices[randomIndex];
+
+                                        const computerChoiceImage = document.createElement('img');
+
+                                        // Set the image source based on the computer's choice
+                                        computerChoiceImage.src = `images/${computerChoice.toLowerCase()}.png`; // Assumes your images are named "scissors.png", "paper.png", etc.
+
+                                        // Set alt text for the image (optional)
+                                        computerChoiceImage.alt = `Computer's choice: ${computerChoice}`;
+
+                                        computerChoiceImage.style.width = '400px'; // Adjust the width as needed
+                                        computerChoiceImage.style.height = '400px'; // Adjust the height as needed
+
+                                        // Append the image to the computer-choice-image-div
+                                        computerChoiceImageDiv.innerHTML = '';
+                                        computerChoiceImageDiv.appendChild(computerChoiceImage);
+
+                                        // Display the computer's choice in the HTML
+                                        computerChoiceDiv.innerHTML = "Computer: " + computerChoice;
+                                        userChoiceDiv.innerHTML = "User: " + userChoice;
+
+                                        // Compare computer's choice with user's choice
+
+                                        let result = "It's a tie!"; // Default result is a tie
+                                        let resultColor = "brown"; // Default color is amber
+
+                                        if (
+                                            (userChoice === "Scissors" && computerChoice === "Paper") ||
+                                            (userChoice === "Paper" && computerChoice === "Stone") ||
+                                            (userChoice === "Stone" && computerChoice === "Scissors")
+                                        ) {
+                                            result = "You Win!";
+                                            resultColor = "green";
+                                        } else if (
+                                            (computerChoice === "Scissors" && userChoice === "Paper") ||
+                                            (computerChoice === "Paper" && userChoice === "Stone") ||
+                                            (computerChoice === "Stone" && userChoice === "Scissors")
+                                        ) {
+                                            result = "Computer Wins!";
+                                            resultColor = "red";
+                                        }
+
+                                        // Display the result with the specified color
+                                        document.getElementById('result').innerHTML = result;
+                                        document.getElementById('result').style.color = resultColor;
+
+
+
+                                        // Reset the gameStarted variable to allow another round
+                                        gameStarted = false;
+
+                                        // Show the "Start Game" button again
+                                        document.getElementById('start-game-button').style.display = 'block';
+                                    }
+                                }, 1000);
+                            }
+                        }
+
+
+                    </script>
+
+
+
+                    <div id="user-choice" style="color: blue;"></div>
+                </main>
+            </div>
+
+
+            <div class="col-sm">
+                <div id="computer-choice-image" style="text-align: center;"></div>
+                <div id="computer-choice" style="color: red; text-align: center;"></div>
+            </div>
+
+        </div>
+    </div>
+
+
+    <div id="game-result-container" style="text-align: center;">
+        <button type="button" class="btn btn-success" id="start-game-button" onclick="startGame()">Start Game</button>
+        <!-- <div id="computer-choice-image"></div> -->
+        <div id="countdown"></div>
+        <!-- <div id="user-choice" style="color: blue;"></div> -->
+        <!-- <div id="computer-choice" style="color: red;"></div> -->
+        <div id="result" style="color: amber;"></div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"
+        integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN"
+        crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.12.9/dist/umd/popper.min.js"
+        integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q"
+        crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.0.0/dist/js/bootstrap.min.js"
+        integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl"
+        crossorigin="anonymous"></script>
+</body>
+
+</html>
